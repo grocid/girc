@@ -1,5 +1,6 @@
 # girc
 A simple chat client in Python/Twisted.
 
-# Screenshot
-![gric](screenshot.png)
+# Screenshots
+![girc](screenshot.png)
+![girc dark](dark.png)
