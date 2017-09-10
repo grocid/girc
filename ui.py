@@ -11,7 +11,7 @@ class Channel(Gtk.ListBoxRow):
         super(Channel, self).__init__(*args, **kwds)
         # Create elements
         self.symbol = Gtk.Image()
-        self.symbol.set_from_file('./irc.png')
+        self.symbol.set_from_file("irc.png")
         self.caption = Gtk.Label()
         self.caption.set_justify(Gtk.Justification.LEFT)
 
@@ -24,6 +24,9 @@ class Channel(Gtk.ListBoxRow):
 
         # Add to layout
         self.add(outer)
+
+    def set_symbol(self, symbol):
+        self.symbol.set_from_file(symbol)
 
     def set_content(self, channel, topic, lastmessage):
         self.channel = channel
@@ -57,6 +60,7 @@ class ChatWindow():
         self.content = Gtk.TextView()
         self.content.set_property('editable', False)
         self.content.set_wrap_mode(True)
+        self.content.set_cursor_visible(False)
         self.textbuffer = self.content.get_buffer()
         
         # Header

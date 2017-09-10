@@ -33,6 +33,13 @@ class Interface(Gtk.Window):
     last_user = {}
     user_tag = {}
 
+    def __init__(self, title):
+        Gtk.Window.__init__(self, title="Chatt")
+        icontheme = Gtk.IconTheme.get_default()
+        self.set_icon(icontheme.load_icon("applications-internet", 64, 0))
+        self.set_default_size(800, 600)
+        self.init_window(title)
+
     def __html_encode(self, s):
         escapeChars = (
             ('>', '&gt;'),
@@ -77,6 +84,7 @@ class Interface(Gtk.Window):
         self.chat.set_buffer(self.channel_buffers[self.channel])
 
     def add_channel(self, channel):
+
         if self.channel == None:
             self.channel = channel
 
@@ -88,6 +96,9 @@ class Interface(Gtk.Window):
         # Update content
         c = Channel()
         c.set_content(channel, channel, channel)
+        if not channel.startswith("#"):
+            c.set_symbol("user.png")
+
         self.channel_tabs[channel] = c
         self.sidebar.add(c)
 
@@ -98,20 +109,20 @@ class Interface(Gtk.Window):
         return self.channel
 
     def update_chat(self, user, channel, text):
-        user = user.split("!")[0]
+        # Check if channel is there
+        if channel not in self.channel_buffers:
+            self.add_channel(channel)
+
+        # Get users
+        
         buf = self.channel_buffers[channel]
         if self.last_user.get(channel) != user:
             buf.insert_with_tags(buf.get_end_iter(), "{}\n".format(user), self.user_tag[channel])
         buf.insert(buf.get_end_iter(), "{}\n".format(text))
 
         self.last_user[channel] = user
-        self.channel_tabs[channel].set_content(channel, channel, self.__html_encode(text[:20]))
+        self.channel_tabs[channel].set_content(channel, channel, text[:20])
 
-
-    def __init__(self, title):
-        Gtk.Window.__init__(self, title="Chatt")
-        self.set_default_size(800, 600)
-        self.init_window(title)
 
 if __name__ == "__main__":
 
@@ -128,6 +139,7 @@ if __name__ == "__main__":
         Gtk.main()
 
     def sendmessage(entry, channel):
+        print channel(), entry.get_text() 
         f.client.msg(channel(), entry.get_text())
         win.update_chat(f.client.nickname, channel(), "" + entry.get_text())
         entry.set_text("")
@@ -139,13 +151,16 @@ if __name__ == "__main__":
 
     notify2.init('Chat')
 
+    # Init window
     win = Interface(description)
     GObject.threads_init()
     win.show_all()
     Gdk.threads_init()
 
+    # Connect textentry to sendmessage function
     win.entry.connect("activate", sendmessage, win.get_channel)
 
+    # Add client with callback
     f = ClientFactory([], nickname, password, win)
     reactor.connectSSL(hostname, int(port), f, ssl.ClientContextFactory())
 

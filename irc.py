@@ -19,7 +19,12 @@ class Client(irc.IRCClient):
         self.interface.leave_channel(channel)        
 
     def privmsg(self, user, channel, msg):
-        self.interface.update_chat(user, channel, msg)
+        # Check if private message
+        user = user.split("!")[0]
+        if channel == self.nickname:
+            self.interface.update_chat(user, user, msg)
+        else:
+            self.interface.update_chat(user, channel, msg)
 
 
 class ClientFactory(protocol.ClientFactory):
