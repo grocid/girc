@@ -23,7 +23,7 @@ class Client(irc.IRCClient):
     def privmsg(self, user, channel, msg):
         # Check if private message
         user = user.split("!")[0]
-        msg = filter(lambda x: x in string.printable, msg)
+
         if channel == self.nickname:
             self.interface.update_chat(user, user, msg)
         else:

@@ -217,8 +217,17 @@ if __name__ == "__main__":
         Gtk.main()
 
     def sendmessage(entry, channel):
-        f.client.msg(channel(), entry.get_text())
-        win.update_chat(f.client.nickname, channel(), "" + entry.get_text())
+        msg = entry.get_text()
+        if msg.startswith("/p"):
+            f.client.leave(channel())
+            pass
+            # leave channel
+        elif msg.startswith("/j "):
+            f.client.join(msg.split()[1])
+            # join channel
+        else:
+            f.client.msg(channel(), msg)
+            win.update_chat(f.client.nickname, channel(), str(msg))
         entry.set_text("")
 
     def stop(*args):
