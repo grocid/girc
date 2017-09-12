@@ -1,3 +1,5 @@
+import string
+
 from twisted.internet import gtk3reactor
 from twisted.words.protocols import irc
 from twisted.internet import reactor
@@ -21,11 +23,11 @@ class Client(irc.IRCClient):
     def privmsg(self, user, channel, msg):
         # Check if private message
         user = user.split("!")[0]
+        msg = filter(lambda x: x in string.printable, msg)
         if channel == self.nickname:
             self.interface.update_chat(user, user, msg)
         else:
             self.interface.update_chat(user, channel, msg)
-
 
 class ClientFactory(protocol.ClientFactory):
 

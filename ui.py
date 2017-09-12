@@ -24,7 +24,6 @@ class Channel(Gtk.ListBoxRow):
 
         # Create elements
         self.symbol = Gtk.Image()
-        self.symbol.set_from_file("irc.png")
         self.caption = Gtk.Label()
         self.caption.set_justify(Gtk.Justification.LEFT)
         self.text = Gtk.Label()
@@ -48,7 +47,7 @@ class Channel(Gtk.ListBoxRow):
         self.add(outer)
 
     def set_symbol(self, symbol):
-        self.symbol.set_from_file(symbol)
+        self.symbol.set_from_file("./assets/{}.png".format(symbol))
 
     def set_content(self, channel, topic, lastmessage):
         self.channel = channel
@@ -58,6 +57,9 @@ class Channel(Gtk.ListBoxRow):
         self.text.set_text(self.lastmessage)
 
 class Sidebar():
+
+    symbols = {}
+
     def __init__(self):
         self.view = Gtk.ScrolledWindow()
         self.content = Gtk.ListBox()
@@ -69,10 +71,12 @@ class Sidebar():
         self.content.add(element)
         self.content.show_all()
 
+
 def changed(vadjust):
     vadjust.set_value(vadjust.get_upper() - vadjust.get_page_size())   
 
 class ChatWindow():
+
     def __init__(self, channel, topic):
         
         # Content view
@@ -84,7 +88,7 @@ class ChatWindow():
         self.content.set_left_margin(15)
         self.content.set_top_margin(11)
         self.textbuffer = self.content.get_buffer()
-        self.textbuffer.set_text("\n")
+        self.textbuffer.set_text("")
         
         # Wrap in scrolled window
         self.view = Gtk.ScrolledWindow()
