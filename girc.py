@@ -7,6 +7,7 @@ import os
 import json
 import threading
 import notify2
+import webbrowser
 
 from datetime import datetime
 
@@ -41,12 +42,21 @@ class Parser():
                 tag = buf.create_tag(None, 
                                     foreground="#4a85cb", 
                                     underline=Pango.Underline.SINGLE)
+                tag.connect("event", self.open, word)
                 buf.insert_with_tags(buf.get_end_iter(),
                                     word,
                                     tag)
             else:
                 buf.insert(buf.get_end_iter(), word)
             buf.insert(buf.get_end_iter(), " ")
+
+    def open(self, tag, obj, event, it, url):
+        # parser opens the url, not sure if this
+        # is the right to place this.
+        if event.type != Gdk.EventType.BUTTON_PRESS:
+            return
+        webbrowser.open(url)
+
 
 
 class Interface(Gtk.Window):
@@ -63,6 +73,7 @@ class Interface(Gtk.Window):
         Gtk.Window.__init__(self, title="Chatt")
         icontheme = Gtk.IconTheme.get_default()
         self.set_icon(icontheme.load_icon("applications-internet", 128, 0))
+
         self.set_default_size(800, 600)
         self.init_window(title)
         self.parser = Parser()
@@ -93,6 +104,12 @@ class Interface(Gtk.Window):
         # Connect to window
         #self.set_titlebar(self.titlebar)
         self.add(layout)
+
+    def _on_link_tag_event(self, tag, buf, event, itr):
+        if event.type != Gdk.EventType.BUTTON_RELEASE: return
+        text_buffer = self.get_buffer()
+        if text_buffer.get_selection_bounds(): return
+        nfoview.util.show_uri(tag.get_data("url"))
 
     def on_key_press_entry(self, widget, ev, client):
         if ev.keyval == Gdk.KEY_Escape:

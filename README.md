@@ -15,4 +15,4 @@ This is running one server with four channels
 ![usage](usage.png)
 
 # Planned
-- 
+- Add some more stuff to list of planned things,
