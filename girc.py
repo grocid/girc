@@ -4,10 +4,13 @@ import gi
 gi.require_version('Gtk', '3.0')
 
 import os
+import sys
 import json
 import threading
 import notify2
 import webbrowser
+import getpass
+import secretstorage
 
 from datetime import datetime
 
@@ -26,6 +29,7 @@ from twisted.words.protocols import irc
 from twisted.internet import reactor
 from twisted.internet import protocol
 from twisted.internet import ssl
+from twisted.words.protocols.irc import IRCPasswordMismatch
 
 from ui import *
 from irc import *
@@ -216,20 +220,57 @@ class Interface(Gtk.Window):
             if not channel.startswith("#"):
                 self.notify(user, text)
 
+def get_settings():
+    # init bus
+    bus = secretstorage.dbus_init()
+    collection = secretstorage.get_default_collection(bus)
+    attributes = {'application': 'girc'}
+
+    # make sure we can access secret storage
+    if collection.is_locked():
+        print("Keyring is locked.")
+        sys.exit(1)
+
+    if len(sys.argv) > 1:
+        if sys.argv[1] == "configure":
+            try:
+                # Get username and pass from input
+                server = raw_input("Server (hostname:port): ").strip()
+                nickname = raw_input("Nickname: ").strip()
+                password = getpass.getpass("Password: ")
+                proceed = raw_input("This will replace all entries associated with this application. Proceed [y/N]: ")
+                if proceed.strip().lower() == "y":
+                    # clean all data associated with this application
+                    for secret in collection.search_items(attributes):
+                        secret.delete()
+                    # put in keyring
+                    collection.create_item('server', attributes, server)
+                    collection.create_item('nickname', attributes, nickname)
+                    collection.create_item('password', attributes, password)
+                    
+            except KeyboardInterrupt:
+                pass
+            except:
+                print("Some error occurred.")
+            sys.exit(0)
+        else:
+            print("{} is not a valid argument.".format(sys.argv[1]))
+            sys.exit(1)
+
+    items = collection.search_items(attributes)
+    secret = {item.get_label(): item for item in items}  
+
+    return secret
+
 if __name__ == "__main__":
 
-    with open("settings.json", "r") as f:
-        settings = json.loads(f.read())
+    secret = get_settings()
     
-    hostname, port = settings.get("server").split(":")
-    description = settings.get("description")
-    credentials = settings.get("credentials")
-    nickname = str(credentials.get("nickname").strip())
-    try:
-        password = str(credentials.get("password").strip())
-    except:
-        pass
-    
+    hostname, port = secret.get("server").get_secret().split(":")
+    port = int(port)
+    nickname = secret.get("nickname").get_secret().strip()
+    password = secret.get("password").get_secret()
+  
     def a():
         Gtk.main()
 
@@ -253,18 +294,18 @@ if __name__ == "__main__":
         os._exit(0)
 
     # Init window
-    win = Interface(description)
+    win = Interface(hostname)
     GObject.threads_init()
     win.show_all()
     Gdk.threads_init()
 
-    # Connect textentry to sendmessage function
-    win.entry.connect("activate", sendmessage, win.get_channel)
-    win.entry.connect("key-press-event", win.on_key_press_entry, f)  
-
     # Add client with callback
     f = ClientFactory([], nickname, password, win)
     reactor.connectSSL(hostname, int(port), f, ssl.ClientContextFactory())
+
+    # Connect textentry to sendmessage function
+    win.entry.connect("activate", sendmessage, win.get_channel)
+    win.entry.connect("key-press-event", win.on_key_press_entry, f)  
 
     # Add highlights
     win.set_highlights([nickname])

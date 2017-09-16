@@ -1,9 +1,0 @@
-{
-	"server": "server:port",
-	"description": "My Irc Connection",
-	"credentials":
-	{
-		"nickname": "nickname",
-		"password": "password"
-	}
-}
